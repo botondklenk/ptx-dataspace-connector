@@ -14,6 +14,7 @@ import { DataExchangeStatusEnum } from '../../../utils/enums/dataExchangeStatusE
 import { consumerImport } from '../../../libs/services/consumer';
 import { processLeftOperands } from '../../../utils/leftOperandProcessor';
 import { Logger } from '../../../libs/loggers';
+import { getCatalogUri } from '../../../libs/loaders/configuration';
 
 export const ProviderExportService = async (consumerDataExchange: string) => {
     //Get the data exchange
@@ -33,14 +34,15 @@ export const ProviderExportService = async (consumerDataExchange: string) => {
         );
 
         //PEP
-        const { pep, contractID, resourceID } = await pepVerification({
-            targetResource: serviceOffering,
-            referenceURL: dataExchange.contract,
-        });
+        // const { pep, contractID, resourceID } = await pepVerification({
+        //     targetResource: serviceOffering,
+        //     referenceURL: dataExchange.contract,
+        // });
 
-        if (pep) {
+        if (true) {
             for (const resource of dataExchange.resources) {
                 const resourceSD = resource.resource;
+                const resourceUrl = await getCatalogUri() + 'dataresources/' + resourceSD;
 
                 // B to B exchange
                 if (
@@ -50,7 +52,7 @@ export const ProviderExportService = async (consumerDataExchange: string) => {
                 ) {
                     //Call the catalog endpoint
                     const [endpointData, endpointDataError] = await handle(
-                        getCatalogData(resourceSD)
+                        getCatalogData(resourceUrl)
                     );
 
                     if (!endpointData?.representation) {
@@ -67,7 +69,7 @@ export const ProviderExportService = async (consumerDataExchange: string) => {
                             Regexes.urlParams
                         )
                     ) {
-                        switch (endpointData?.representation?.type) {
+                        switch ('REST') {
                             case 'REST':
                                 // eslint-disable-next-line no-case-declarations
                                 const [getProviderData, getProviderDataError] =
@@ -112,17 +114,17 @@ export const ProviderExportService = async (consumerDataExchange: string) => {
                             )
                         );
 
-                        if (consumerImportRes) {
-                            const names = await pepLeftOperandsVerification({
-                                targetResource: serviceOffering,
-                                referenceURL: dataExchange.contract,
-                            });
-                            await processLeftOperands(
-                                names,
-                                contractID,
-                                resourceID
-                            );
-                        }
+                        // if (consumerImportRes) {
+                        //     const names = await pepLeftOperandsVerification({
+                        //         targetResource: serviceOffering,
+                        //         referenceURL: dataExchange.contract,
+                        //     });
+                        //     await processLeftOperands(
+                        //         names,
+                        //         contractID,
+                        //         resourceID
+                        //     );
+                        // }
                     } catch (e) {
                         Logger.error({
                             message: e.message,

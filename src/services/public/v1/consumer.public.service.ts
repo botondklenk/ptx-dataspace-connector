@@ -180,14 +180,12 @@ export const triggerEcosystemFlow = async (props: {
         axios.get(providerSelfDescription.participant)
     );
 
-    if (
-        consumerSelfDescriptionResponse?.dataspaceEndpoint ===
-        (await getEndpoint())
-    ) {
+    const consumerEndpoint = consumerSelfDescriptionResponse?.content['ptx:hasDefaultEndpoint']['ptx:accessURL']['@id'];
+    const providerEndpoint = providerSelfDescriptionResponse?.content['ptx:hasDefaultEndpoint']['ptx:accessURL']['@id'];
+    if (consumerEndpoint === (await getEndpoint())) {
         //search consumerEndpoint
         dataExchange = await DataExchange.create({
-            providerEndpoint:
-                providerSelfDescriptionResponse?.dataspaceEndpoint,
+            providerEndpoint: providerEndpoint,
             resources: mappedResources,
             purposeId: purposeId,
             contract: contract,
@@ -196,13 +194,9 @@ export const triggerEcosystemFlow = async (props: {
             createdAt: new Date(),
         });
         await dataExchange.createDataExchangeToOtherParticipant('provider');
-    } else if (
-        providerSelfDescriptionResponse?.dataspaceEndpoint ===
-        (await getEndpoint())
-    ) {
+    } else if (providerEndpoint === (await getEndpoint())) {
         dataExchange = await DataExchange.create({
-            consumerEndpoint:
-                consumerSelfDescriptionResponse?.dataspaceEndpoint,
+            consumerEndpoint: consumerEndpoint,
             resources: mappedResources,
             purposeId: purposeId,
             contract: contract,
@@ -217,7 +211,7 @@ export const triggerEcosystemFlow = async (props: {
 
     return {
         dataExchange,
-        providerEndpoint: providerSelfDescriptionResponse?.dataspaceEndpoint,
+        providerEndpoint: providerEndpoint,
     };
 };
 
