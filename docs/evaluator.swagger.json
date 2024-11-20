@@ -1,0 +1,444 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Data Veracity Evaluator API",
+    "version": "1.0.0",
+    "description": "API documentation for the Data Veracity Evaluator"
+  },
+  "tags": [
+    {
+      "name": "evaluation",
+      "description": "Operations related to evaluations"
+    },
+    {
+      "name": "proof",
+      "description": "Operations related to proofs"
+    }
+  ],
+  "paths": {
+    "/evaluation": {
+      "get": {
+        "summary": "Get all evaluations",
+        "tags": [
+          "evaluation"
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Evaluation"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/evaluation/{exchangeId}": {
+      "parameters": [
+        {
+          "name": "exchangeId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "example": "651f2e8f734ea5932e5c76a2"
+          }
+        }
+      ],
+      "get": {
+        "summary": "Get evaluation by ID",
+        "operationId": "getEvaluation",
+        "tags": [
+          "evaluation"
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Evaluation"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "summary": "Start evaluation with given ID",
+        "tags": [
+          "evaluation"
+        ],
+        "operationId": "startEvaluation",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "vla": {
+                    "$ref": "#/components/schemas/VLA"
+                  }
+                },
+                "required": [
+                  "vla"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Evaluation"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/evaluation/{exchangeId}/evaluate": {
+      "parameters": [
+        {
+          "name": "exchangeId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "example": "651f2e8f734ea5932e5c76a2"
+          }
+        }
+      ],
+      "patch": {
+        "summary": "Evaluate data",
+        "tags": [
+          "evaluation"
+        ],
+        "operationId": "evaluateData",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "resourceId": {
+                    "type": "string"
+                  },
+                  "data": {
+                    "type": "array",
+                    "items": {
+                      "type": "object"
+                    }
+                  }
+                },
+                "required": [
+                  "resourceId",
+                  "data"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Evaluation successful"
+          }
+        }
+      }
+    },
+    "/evaluation/{exchangeId}/status": {
+      "parameters": [
+        {
+          "name": "exchangeId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "example": "651f2e8f734ea5932e5c76a2"
+          }
+        }
+      ],
+      "patch": {
+        "summary": "Abort or finish evaluation",
+        "tags": [
+          "evaluation"
+        ],
+        "operationId": "stopEvaluation",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "status": {
+                    "$ref": "#/components/schemas/EvaluationStatus"
+                  }
+                },
+                "required": [
+                  "status"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Status updated"
+          }
+        }
+      }
+    },
+    "/proof": {
+      "get": {
+        "summary": "Get all proofs",
+        "tags": [
+          "proof"
+        ],
+        "operationId": "getProofs",
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Proof"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/proof/{exchangeId}": {
+      "parameters": [
+        {
+          "name": "exchangeId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "example": "651f2e8f734ea5932e5c76a2"
+          }
+        }
+      ],
+      "get": {
+        "summary": "Get proof by ID",
+        "tags": [
+          "proof"
+        ],
+        "operationId": "getProof",
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Proof"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "EvaluationStatus": {
+        "type": "string",
+        "enum": [
+          "STARTED",
+          "ABORTED",
+          "FINISHED"
+        ]
+      },
+      "DataType": {
+        "type": "string",
+        "enum": [
+          "JSON",
+          "TABULAR"
+        ]
+      },
+      "Aspect": {
+        "type": "string",
+        "enum": [
+          "syntax",
+          "time_range",
+          "sequential",
+          "amount"
+        ]
+      },
+      "Objective": {
+        "type": "object",
+        "properties": {
+          "description": {
+            "type": "string"
+          },
+          "aspect": {
+            "$ref": "#/components/schemas/Aspect"
+          },
+          "evaluation": {
+            "type": "object"
+          }
+        },
+        "required": [
+          "description",
+          "aspect"
+        ]
+      },
+      "VLA": {
+        "type": "object",
+        "properties": {
+          "meta": {
+            "type": "object",
+            "properties": {
+              "description": {
+                "type": "string"
+              },
+              "provider": {
+                "type": "string"
+              },
+              "consumer": {
+                "type": "string"
+              },
+              "dataType": {
+                "$ref": "#/components/schemas/DataType"
+              },
+              "status": {
+                "type": "string"
+              },
+              "timestamp": {
+                "type": "string",
+                "format": "date-time"
+              }
+            },
+            "required": [
+              "provider",
+              "consumer",
+              "dataType"
+            ]
+          },
+          "objectives": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Objective"
+            }
+          }
+        },
+        "required": [
+          "meta",
+          "objectives"
+        ],
+        "example": {
+          "meta": {
+            "description": "A description of the dataset",
+            "provider": "A provider",
+            "consumer": "A consumer",
+            "dataType": "JSON",
+            "status": "SINGED",
+            "timestamp": "2022-03-01T00:00:00.000Z"
+          },
+          "objectives": [
+            {
+              "description": "A description of the objective",
+              "aspect": "amount",
+              "evaluation": {
+                "min": 20,
+                "max": 30
+              }
+            }
+          ]
+        }
+      },
+      "AspectResult": {
+        "type": "object",
+        "properties": {
+          "value": {
+            "type": "object",
+            "nullable": true
+          },
+          "valid": {
+            "type": "boolean",
+            "nullable": true
+          }
+        }
+      },
+      "EvaluationResult": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "aspect": {
+              "$ref": "#/components/schemas/Aspect"
+            },
+            "result": {
+              "$ref": "#/components/schemas/AspectResult"
+            }
+          }
+        }
+      },
+      "Evaluation": {
+        "type": "object",
+        "properties": {
+          "exchangeId": {
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/EvaluationStatus"
+          },
+          "vla": {
+            "$ref": "#/components/schemas/VLA"
+          },
+          "result": {
+            "$ref": "#/components/schemas/EvaluationResult"
+          }
+        },
+        "required": [
+          "exchangeId",
+          "status",
+          "vla",
+          "result"
+        ]
+      },
+      "Proof": {
+        "type": "object",
+        "properties": {
+          "exchangeId": {
+            "type": "string"
+          },
+          "results": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string",
+              "example": "hash"
+            }
+          },
+          "match": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "exchangeId",
+          "results",
+          "match"
+        ]
+      }
+    }
+  }
+}

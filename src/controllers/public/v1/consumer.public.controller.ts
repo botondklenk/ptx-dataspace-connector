@@ -15,8 +15,15 @@ import {
     triggerEcosystemFlow,
 } from '../../../services/public/v1/consumer.public.service';
 import { ProviderExportService } from '../../../services/public/v1/provider.public.service';
-import { getCatalogUri, getEndpoint } from '../../../libs/loaders/configuration';
+import {
+    getCatalogUri,
+    getEndpoint,
+} from '../../../libs/loaders/configuration';
 import { ExchangeError } from '../../../libs/errors/exchangeError';
+import {
+    EvaluationService,
+    EvaluationStatus,
+} from '../../../generated/evaluator-client';
 
 /**
  * trigger the data exchange between provider and consumer in a bilateral or ecosystem contract
@@ -91,12 +98,21 @@ export const consumerExchange = async (
                 providerExport(providerEndpoint, dataExchange._id.toString())
             );
         }
+
+        await EvaluationService.stopEvaluation(dataExchange._id.toString(), {
+            status: EvaluationStatus.FINISHED,
+        });
+
         // return code 200 everything is ok
         restfulResponse(res, 200, { success: true });
     } catch (e) {
         Logger.error({
             message: e.message,
             location: e.stack,
+        });
+
+        await EvaluationService.stopEvaluation(dataExchange._id.toString(), {
+            status: EvaluationStatus.ABORTED,
         });
 
         restfulResponse(res, 500, { success: false, message: e.message });
@@ -115,7 +131,12 @@ export const consumerImport = async (
     next: NextFunction
 ) => {
     //req.body
-    const { providerDataExchange, data, apiResponseRepresentation } = req.body;
+    const {
+        providerDataExchange,
+        resourceId,
+        data,
+        apiResponseRepresentation,
+    } = req.body;
 
     //Get dataExchangeId
     const dataExchange = await DataExchange.findOne({
@@ -140,12 +161,13 @@ export const consumerImport = async (
         const [catalogServiceOffering, catalogServiceOfferingError] =
             await handle(getCatalogData(dataExchange.purposeId));
 
-        const resourceUrl = await getCatalogUri() + 'softwareresources/' + catalogServiceOffering?.softwareResources[0];
+        const resourceUrl =
+            (await getCatalogUri()) +
+            'softwareresources/' +
+            catalogServiceOffering?.softwareResources[0];
 
         const [catalogSoftwareResource, catalogSoftwareResourceError] =
-            await handle(
-                getCatalogData(resourceUrl)
-            );
+            await handle(getCatalogData(resourceUrl));
 
         //Import data to endpoint of softwareResource
         const endpoint = catalogSoftwareResource?.representation?.url;
@@ -194,6 +216,12 @@ export const consumerImport = async (
                 DataExchangeStatusEnum.IMPORT_SUCCESS
             );
         }
+
+        await EvaluationService.evaluateData(dataExchange._id.toString(), {
+            resourceId: resourceId,
+            data,
+        });
+
         return restfulResponse(res, 200, { success: true });
         // } else {
         //     // @ts-ignore

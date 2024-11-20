@@ -15,6 +15,10 @@ import { consumerImport } from '../../../libs/services/consumer';
 import { processLeftOperands } from '../../../utils/leftOperandProcessor';
 import { Logger } from '../../../libs/loggers';
 import { getCatalogUri } from '../../../libs/loaders/configuration';
+import {
+    EvaluationService,
+    EvaluationStatus,
+} from '../../../generated/evaluator-client';
 
 export const ProviderExportService = async (consumerDataExchange: string) => {
     //Get the data exchange
@@ -25,6 +29,13 @@ export const ProviderExportService = async (consumerDataExchange: string) => {
     try {
         // Get the contract
         const [contractResp] = await handle(getContract(dataExchange.contract));
+        const vla = contractResp.vla;
+        await EvaluationService.startEvaluation(
+            dataExchange.consumerDataExchange,
+            {
+                vla,
+            }
+        );
 
         const serviceOffering = selfDescriptionProcessor(
             dataExchange.resources[0].serviceOffering,
@@ -42,7 +53,8 @@ export const ProviderExportService = async (consumerDataExchange: string) => {
         if (true) {
             for (const resource of dataExchange.resources) {
                 const resourceSD = resource.resource;
-                const resourceUrl = await getCatalogUri() + 'dataresources/' + resourceSD;
+                const resourceUrl =
+                    (await getCatalogUri()) + 'dataresources/' + resourceSD;
 
                 // B to B exchange
                 if (
@@ -99,9 +111,17 @@ export const ProviderExportService = async (consumerDataExchange: string) => {
                     if (!data) {
                         await dataExchange.updateStatus(
                             DataExchangeStatusEnum.PROVIDER_EXPORT_ERROR,
-                            'No date found'
+                            'No data found'
                         );
                     }
+
+                    await EvaluationService.evaluateData(
+                        dataExchange.consumerDataExchange,
+                        {
+                            resourceId: resourceSD,
+                            data,
+                        }
+                    );
 
                     try {
                         //Send the data to generic endpoint
@@ -109,6 +129,7 @@ export const ProviderExportService = async (consumerDataExchange: string) => {
                             consumerImport(
                                 dataExchange.consumerEndpoint,
                                 dataExchange._id.toString(),
+                                resourceSD,
                                 data,
                                 endpointData?.apiResponseRepresentation
                             )
@@ -134,6 +155,13 @@ export const ProviderExportService = async (consumerDataExchange: string) => {
                 }
             }
 
+            await EvaluationService.stopEvaluation(
+                dataExchange.consumerDataExchange,
+                {
+                    status: EvaluationStatus.FINISHED,
+                }
+            );
+
             return true;
         } else {
             await dataExchange.updateStatus(DataExchangeStatusEnum.PEP_ERROR);
@@ -143,6 +171,13 @@ export const ProviderExportService = async (consumerDataExchange: string) => {
             message: e.message,
             location: e.stack,
         });
+
+        await EvaluationService.stopEvaluation(
+            dataExchange.consumerDataExchange,
+            {
+                status: EvaluationStatus.ABORTED,
+            }
+        );
 
         await dataExchange.updateStatus(
             DataExchangeStatusEnum.PROVIDER_EXPORT_ERROR,

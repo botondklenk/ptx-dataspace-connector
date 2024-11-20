@@ -48,6 +48,8 @@ export const config: {
      * limit of express body size
      */
     limit: string;
+
+    evaluatorUrl: string;
 } = {
     env: 'development',
     port: 3000,
@@ -100,5 +102,7 @@ export const setupEnvironment = (customEnv?: string) => {
         process.env.WINSTON_LOGS_MAX_FILES || config.winstonLogsMaxFiles;
     config.winstonLogsMaxSize =
         process.env.WINSTON_LOGS_MAX_SIZE || config.winstonLogsMaxSize;
-    config.configurationFile = `config.${envArg.substring(2)}.json` || `config.json`
+    config.configurationFile =
+        `config.${envArg.substring(2)}.json` || 'config.json';
+    config.evaluatorUrl = process.env.EVALUATOR_URL || config.evaluatorUrl;
 };

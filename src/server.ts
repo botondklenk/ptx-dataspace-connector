@@ -17,6 +17,7 @@ import { setup, serve } from 'swagger-ui-express';
 import { OpenAPIOption } from '../openapi-options';
 import path from 'path';
 import { writeFile } from 'fs';
+import { OpenAPI as EvaluatorApiConfig } from './generated/evaluator-client';
 
 export type AppServer = {
     app: express.Application;
@@ -30,11 +31,17 @@ export type AppServer = {
  */
 export const startServer = async (port?: number) => {
     const app = express();
+    EvaluatorApiConfig.BASE = config.evaluatorUrl;
 
     app.use(cors({ origin: true, credentials: true }));
     app.use(cookieParser());
-    app.use(express.json({limit: getExpressLimitSize() || config.limit}));
-    app.use(express.urlencoded({limit: getExpressLimitSize() || config.limit, extended: true }));
+    app.use(express.json({ limit: getExpressLimitSize() || config.limit }));
+    app.use(
+        express.urlencoded({
+            limit: getExpressLimitSize() || config.limit,
+            extended: true,
+        })
+    );
 
     // Setup Swagger JSDoc
     const specs = swaggerJSDoc(OpenAPIOption);

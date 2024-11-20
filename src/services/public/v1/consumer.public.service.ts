@@ -11,6 +11,7 @@ import { getEndpoint } from '../../../libs/loaders/configuration';
 import { getCatalogData } from '../../../libs/services/catalog';
 import { ExchangeError } from '../../../libs/errors/exchangeError';
 import { getContract } from '../../../libs/services/contract';
+import { EvaluationService } from '../../../generated/evaluator-client';
 
 export const triggerBilateralFlow = async (props: {
     contract: string;
@@ -184,6 +185,12 @@ export const triggerEcosystemFlow = async (props: {
         // Create the data exchange at the provider
         await dataExchange.createDataExchangeToOtherParticipant('consumer');
     }
+
+    // start evaluation
+    const vla = contractResponse.vla;
+    await EvaluationService.startEvaluation(dataExchange._id.toString(), {
+        vla,
+    });
 
     return {
         dataExchange,
